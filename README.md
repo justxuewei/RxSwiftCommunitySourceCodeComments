@@ -1,0 +1,3 @@
+# RxSwift Community Source Code Comments
+
+This project shows my comments to source code of RxSwift, which is one of the concrete implementations on reactive programming for Swift. All the comments by myself have 'Xavier Marks:' prefix, which make you find them quickly. The source code I uses is based on `RxSwift v5.0.1` designed for Swift 5,  iOS 13 and macOS Catalina. If you have any question, please feel free to create an issue on Github or email to me.
