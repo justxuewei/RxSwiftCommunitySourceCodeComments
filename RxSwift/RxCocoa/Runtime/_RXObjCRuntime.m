@@ -132,12 +132,26 @@ SEL __nonnull RX_selector(SEL __nonnull selector) {
 
 #endif
 
+// Marked by Xavier:
+//
+// More Details about Objective-C Runtime: https://juejin.im/post/5c7b81f86fb9a049e660f71f
+//
+// NSMethodSignature with NSInvocation is for message forwarding
 BOOL RX_is_method_signature_void(NSMethodSignature * __nonnull methodSignature) {
     const char *methodReturnType = methodSignature.methodReturnType;
     return strcmp(methodReturnType, @encode(void)) == 0;
 }
 
 BOOL RX_is_method_with_description_void(struct objc_method_description method) {
+    // Marked by Xavier:
+    //
+    // strncpm introduction: http://www.cplusplus.com/reference/cstring/strncmp/
+    //
+    // `method.types` returns a string describing what type of the method is, for
+    // example:
+    // The value of `method.types` of method which is defined by `- (void)test;`
+    // is `v16@0:8`. The first character, 'v', indicates the type of return value
+    // is void.
     return strncmp(method.types, @encode(void), 1) == 0;
 }
 

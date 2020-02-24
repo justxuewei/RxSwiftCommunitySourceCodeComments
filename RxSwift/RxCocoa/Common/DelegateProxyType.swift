@@ -108,6 +108,25 @@ public protocol DelegateProxyType: class {
     /// through `self`.
     ///
     /// - returns: Value of reference if set or nil.
+    
+    // Marked by Xavier:
+    //
+    // How forwardToDelegate works?
+    //
+    // Please refer to page 282 on RxSwift Reactive Programming with Swift v3.0
+    // first.
+    //
+    // In the case that method from delegate has not returned value, we can deal
+    // with that with `delegate.methodInvoked()`. See an example about this topic
+    // on page 279.
+    //
+    // However, for methods with a returned value, methodInvoked won't help much.
+    // On the one hand, we need create a stream to emit values as what a normal
+    // observable does. On the another hand, you want a classic implementation of
+    // delegate. Then, you need to forward to delegate. To better understand what
+    // it exactly is, you can see `scrollViewDidScroll(_:)` method in
+    // `RxScrollViewDelegateProxy.swift` which both emits events and call the
+    // classic implementation.
     func forwardToDelegate() -> Delegate?
 
     /// Sets reference of normal delegate that receives all forwarded messages
@@ -217,6 +236,10 @@ extension DelegateProxyType {
     /// - returns: Disposable object that can be used to clear forward delegate.
     public static func installForwardDelegate(_ forwardDelegate: Delegate, retainDelegate: Bool, onProxyForObject object: ParentObject) -> Disposable {
         weak var weakForwardDelegate: AnyObject? = forwardDelegate as AnyObject
+        // Marked by Xavier:
+        //
+        // Get proxy from factories of parent object, before you do this,
+        // you should register proxy in factories of parent object.
         let proxy = self.proxy(for: object)
 
         assert(proxy._forwardToDelegate() === nil, "This is a feature to warn you that there is already a delegate (or data source) set somewhere previously. The action you are trying to perform will clear that delegate (data source) and that means that some of your features that depend on that delegate (data source) being set will likely stop working.\n" +

@@ -9,15 +9,18 @@
 import Foundation
 
 public struct SectionModel<Section, ItemType> {
+    // Xavier Marks: Section is a type conforming to SectionModelType
     public var model: Section
     public var items: [Item]
 
+    // Xavier Marks: init from section
     public init(model: Section, items: [Item]) {
         self.model = model
         self.items = items
     }
 }
 
+// MARK: SectionModel conforms to SectionModelType
 extension SectionModel
     : SectionModelType {
     public typealias Identity = Section
@@ -28,6 +31,7 @@ extension SectionModel
     }
 }
 
+// MARK: SectionModel conforms to CustomStringConvertible
 extension SectionModel
     : CustomStringConvertible {
 
@@ -36,13 +40,19 @@ extension SectionModel
     }
 }
 
+// MARK: init() of SectionModel
 extension SectionModel {
+    // Xavier Marks:
+    //
+    // init from other SectionModel, this is a concrete implementation
+    // for conforming to SectionModelType
     public init(original: SectionModel<Section, Item>, items: [Item]) {
         self.model = original.model
         self.items = items
     }
 }
 
+// MARK: rewrites `==`
 extension SectionModel
     : Equatable where Section: Equatable, ItemType: Equatable {
     

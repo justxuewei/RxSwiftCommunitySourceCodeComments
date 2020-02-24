@@ -120,14 +120,29 @@ extension Reactive where Base: UITableView {
             // Therefore it's better to set delegate proxy first, just to be sure.
             _ = self.delegate
             // Strong reference is needed because data source is in use until result subscription is disposed
+            
+            // Marked by Xavier:
+            //
+            // Method `subscribeProxyDataSource` is implemented in an extension of `ObservableType` and
+            // defined in `DelegateProxyType.swift`.
+            //
+            // What this method does are:
+            // - Create a proxy based on `ofObject`, but you should register the proxy you need in
+            //   function `registerKnownImplementations()` before you perform the action.
+            // - Set forwarded delegate to the new proxy you just created, in this case, it is
+            //   `dataSource`.
+            // - Subscribe `source` and perform binding closure once any event is emitted, but it
+            //   will dispose if encounters `.error` or `.completed` event.
             return source.subscribeProxyDataSource(ofObject: self.base, dataSource: dataSource as UITableViewDataSource, retainDataSource: true) { [weak tableView = self.base] (_: RxTableViewDataSourceProxy, event) -> Void in
                 guard let tableView = tableView else {
                     return
                 }
-                // Xavier Marks:
+                // Marked by Xavier:
+                //
                 // This function is from extension of data source defined in `RxTableViewDataSourceType`.
-                // dataSource is an instance of `RxTableViewReactiveArrayDataSourceSequenceWrapper` which
-                // implements dataSource.tableView(_:observedEvent:) concretely.
+                //
+                // `dataSource` is an instance of `RxTableViewReactiveArrayDataSourceSequenceWrapper`
+                // which implements dataSource.tableView(_:observedEvent:) concretely.
                 dataSource.tableView(tableView, observedEvent: event)
             }
         }
@@ -165,6 +180,13 @@ extension Reactive where Base: UITableView {
     Reactive wrapper for `delegate` message `tableView:didSelectRowAtIndexPath:`.
     */
     public var itemSelected: ControlEvent<IndexPath> {
+        // Marked by Xavier:
+        //
+        // The delegate using here is from its parent object UIScrollView. In function
+        // `registerKnownImplementations()` defined in `RxScrollViewDelegateProxy`, we
+        // can notice that returned value of Rx*DelegateProxy.proxy(base:) depends on what
+        // object is passed, for example, it will return a delegate for scroll view if
+        // an instance of scroll view is passed.
         let source = self.delegate.methodInvoked(#selector(UITableViewDelegate.tableView(_:didSelectRowAt:)))
             .map { a in
                 return try castOrThrow(IndexPath.self, a[1])

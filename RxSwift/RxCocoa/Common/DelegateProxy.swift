@@ -92,6 +92,11 @@
 
             let subject = self._sentMessageForSelector[selector]
 
+            // Marked by Xavier:
+            //
+            // If the selector has existed in _sentMessageForSelector, then it will return the observable.
+            // If not existed, it will create an instance of MessageDispatcher and add it into
+            // `_sentMessageForSelector`.
             if let subject = subject {
                 return subject.asObservable()
             }
@@ -159,14 +164,29 @@
             }
         }
 
+        // Marked by Xavier:
+        //
+        // How to determine a selector is observable?
+        // - Superclasses should not response to this selector. (I don't know why.)
+        // - The type of method corresponding to the selector should not be void.
+        // - The forwarded delegate should respond to the selector, if not, it will
+        //   only show the warning to user instead of return.
         fileprivate func checkSelectorIsObservable(_ selector: Selector) {
             MainScheduler.ensureRunningOnMainThread()
 
+            // Marked by Xavier:
+            //
+            // Check whether superclasses implements or inherits the same method.
+            // If it does, return and do nothing.
             if self.hasWiredImplementation(for: selector) {
                 print("⚠️ Delegate proxy is already implementing `\(selector)`, a more performant way of registering might exist.")
                 return
             }
-
+    
+            // Marked by Xavier:
+            //
+            // detect whether the type of method corresponding to the selector is void,
+            // if the type is void, it will return and do nothing.
             if self.voidDelegateMethodsContain(selector) {
                 return
             }
@@ -181,6 +201,27 @@
 
         // proxy
 
+        // Xavier Marks:
+        //
+        // `_sentMessage` & `_methodInvoked` is the real method that emits `next` event when the method
+        // corresponding to selector is invoked.
+        //
+        // Here is an example of how to use `methodInvoked`:
+        //
+        // var regionDidChangeAnimated: ControlEvent<Bool> {
+        //   let source = delegate.methodInvoked(#selector(MKMapViewDelegate.mapView(_:regionDidChangeAnimated:)))
+        //    .map {
+        //       parameters in return (parameters[1] as? Bool) ?? false
+        //     }
+        //   return ControlEvent(events: source)
+        // }
+        //
+        // For now, we can learn some facts from the example above:
+        // - `methodInvoked(Selector)` creates an instance of MessageDispatcher if not existed and returns it.
+        // - `_sentMessage(Selector, withArguments: [Any])` emits `next` event by `on` method of Subject once
+        //   the method of Delegate was invoked.
+        // - As shown in the above code, the arguments passed to method of Delegate could be accessed by an
+        //   argument of closure named `withArguments` in form of array.
         open override func _sentMessage(_ selector: Selector, withArguments arguments: [Any]) {
             self._sentMessageForSelector[selector]?.on(.next(arguments))
         }

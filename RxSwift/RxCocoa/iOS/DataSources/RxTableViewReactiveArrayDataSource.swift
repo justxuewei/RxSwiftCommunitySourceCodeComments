@@ -48,8 +48,16 @@ class RxTableViewReactiveArrayDataSourceSequenceWrapper<Sequence: Swift.Sequence
     }
 
     func tableView(_ tableView: UITableView, observedEvent: Event<Sequence>) {
+        // Marked by Xavier:
+        //
+        // Binder is a subclass of ObserverType, so it observes events by `on`
+        // function and performs binding closure if .next event is emitted.
         Binder(self) { tableViewDataSource, sectionModels in
             let sections = Array(sectionModels)
+            // Marked by Xavier:
+            //
+            // This function is defined in `RxTableViewReactiveArrayDataSource`
+            // to update data source for the tableView.
             tableViewDataSource.tableView(tableView, observedElements: sections)
         }.on(observedEvent)
     }
@@ -91,6 +99,13 @@ class RxTableViewReactiveArrayDataSource<Element>
     
     // reactive
     
+    // Marked by Xavier:
+    //
+    // `[Element]` is an array of element emitted by source observable,
+    // the reason why this method could change UI is it assigns new value
+    // to itemModels which updates original data source through
+    // _tableView(_:numberOfRowsInSection:) and
+    // _tableView(_:cellForRowAt:) respectively.
     func tableView(_ tableView: UITableView, observedElements: [Element]) {
         self.itemModels = observedElements
         

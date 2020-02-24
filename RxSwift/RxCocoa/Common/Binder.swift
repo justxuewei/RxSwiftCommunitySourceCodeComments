@@ -30,6 +30,9 @@ public struct Binder<Value>: ObserverType {
     public init<Target: AnyObject>(_ target: Target, scheduler: ImmediateSchedulerType = MainScheduler(), binding: @escaping (Target, Value) -> Void) {
         weak var weakTarget = target
 
+        // Marked by Xavier:
+        //
+        // The key point of initialization of Binder is `self._binding` assignment with binding closure
         self._binding = { event in
             switch event {
             case .next(let element):
