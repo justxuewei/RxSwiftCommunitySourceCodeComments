@@ -104,6 +104,20 @@ extension Reactive where Base: UITableView {
     - parameter source: Observable sequence of items.
     - returns: Disposable object that can be used to unbind.
     */
+    
+    // Marked by Xavier:
+    //
+    // Why it can use with `bind(to:)`?
+    //
+    // In `Observable+Bind.swift`, we can find there is a method named `public func bind<Result>(to binder: (Self) -> Result) -> Result`,
+    // binder is a closure that receive an observable. `item(dataSource:)` just returns a closure that meets the requirements.
+    //
+    // For example, you create an observable by `Observable.of()` and name it `data`, then create an instance of data source named
+    // `dataSource` as well, then `data` can be bound to `tableView` like this:
+    //
+    //  data
+    //      .bind(to: tableView.rx.item(dataSource: dataSource))
+    //      .disposed(by: disposeBag)
     public func items<
             DataSource: RxTableViewDataSourceType & UITableViewDataSource,
             Source: ObservableType>

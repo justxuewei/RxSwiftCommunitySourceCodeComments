@@ -31,6 +31,8 @@ class Sink<Observer: ObserverType> : Disposable {
         if isFlagSet(self._disposed, 1) {
             return
         }
+        // Marked by Xavier:
+        // `self._observer` is an observer passed by `subscribe(_:)` defined in `Producer<Element>`
         self._observer.on(event)
     }
 
@@ -44,6 +46,8 @@ class Sink<Observer: ObserverType> : Disposable {
 
     func dispose() {
         fetchOr(self._disposed, 1)
+        // Marked by Xavier:
+        // self._cancel is an instance of `SinkDisposer` defined in `Producer<Element>`
         self._cancel.dispose()
     }
 

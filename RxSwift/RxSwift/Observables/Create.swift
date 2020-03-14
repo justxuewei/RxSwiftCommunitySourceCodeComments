@@ -18,6 +18,7 @@ extension ObservableType {
      - returns: The observable sequence with the specified implementation for the `subscribe` method.
      */
     public static func create(_ subscribe: @escaping (AnyObserver<Element>) -> Disposable) -> Observable<Element> {
+        // Marked by Xavier: return an instance of AnonymousObservable
         return AnonymousObservable(subscribe)
     }
 }
@@ -49,6 +50,8 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
             }
             self.forwardOn(event)
         case .error, .completed:
+            // Marked by Xavier:
+            // return previous value which is equals to 0 and assign self._isStopped to 1
             if fetchOr(self._isStopped, 1) == 0 {
                 self.forwardOn(event)
                 self.dispose()
@@ -57,6 +60,8 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
     }
 
     func run(_ parent: Parent) -> Disposable {
+        // Marked by Xavier:
+        // `self` is an `Observer` because `AnonymousObservableSink` conforms to `ObserverType`
         return parent._subscribeHandler(AnyObserver(self))
     }
 }
@@ -70,6 +75,8 @@ final private class AnonymousObservable<Element>: Producer<Element> {
         self._subscribeHandler = subscribeHandler
     }
 
+    // Marked by Xavier:
+    // `observer` is passed by `subscribe(_:)`
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = AnonymousObservableSink(observer: observer, cancel: cancel)
         let subscription = sink.run(self)

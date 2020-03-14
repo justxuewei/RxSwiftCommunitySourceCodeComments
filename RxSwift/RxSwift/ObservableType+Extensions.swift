@@ -53,6 +53,8 @@ extension ObservableType {
             
             let callStack = Hooks.recordCallStackOnError ? Hooks.customCaptureSubscriptionCallstack() : []
             
+            // Marked by Xavier:
+            // Create a anonymous observer to handle events emitted by observable
             let observer = AnonymousObserver<Element> { event in
                 
                 #if DEBUG
