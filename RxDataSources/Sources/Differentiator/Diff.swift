@@ -148,6 +148,15 @@ public enum Diff {
 
     }
 
+    /**
+     Marked by Xavier:
+     
+     Quick look of calculateAssociatedData(initialItemCache:finalItemCache:):
+     - Create `initialIdentities` and `initialItemPaths` that is not grouped by section.
+     - Build a dictionary that maps identity to index of `initialIdentities`.
+     - Traverse `finalItemCache` to save `ItemPath` corresponding to item that has the same identity in `initialItemCache` into `moveIndex` of `finalItemData`.
+       At the same time, save corresponding `ItemPath` of `finalItemCache` into `moveIndex` of `initialItemData`.
+     */
     private static func calculateAssociatedData<Item: IdentifiableType>(
         initialItemCache: ContiguousArray<ContiguousArray<Item>>,
         finalItemCache: ContiguousArray<ContiguousArray<Item>>
@@ -166,6 +175,7 @@ public enum Diff {
             for (i, items) in initialItemCache.enumerated() {
                 for j in 0 ..< items.count {
                     let item = items[j]
+                    // Marked by Xavier: not group by section
                     initialIdentities.append(item.identity)
                     initialItemPaths.append(ItemPath(sectionIndex: i, itemIndex: j))
                 }
@@ -180,9 +190,11 @@ public enum Diff {
             })
 
             try initialIdentities.withUnsafeBufferPointer { (identitiesBuffer: UnsafeBufferPointer<Identity>) -> Void in
+                // `OptimizedIdentity<Identity>` is identity saved in `initialIdentities`, `Int` is index of `initialIdentities`
                 var dictionary: [OptimizedIdentity<Identity>: Int] = Dictionary(minimumCapacity: totalInitialItems * 2)
 
                 for i in 0 ..< initialIdentities.count {
+                    // get `UnsafePointer` of each member of identify
                     let identityPointer = identitiesBuffer.baseAddress!.advanced(by: i)
 
                     let key = OptimizedIdentity(identityPointer)
@@ -446,6 +458,7 @@ public enum Diff {
 
                 // first mark deleted items
                 for i in 0 ..< initialItemCache.count {
+                    // skip the situation that section corresponding to the group of items is deleted
                     guard initialSectionData[i].moveIndex != nil else {
                         continue
                     }
@@ -453,6 +466,8 @@ public enum Diff {
                     var indexAfterDelete = 0
                     for j in 0 ..< initialItemCache[i].count {
 
+                        // set event to `.deleted` if `initialItemData[i][j].moveIndex` is equal to nil
+                        // if not, `finalIndexPath` should be index corresponding to the item in `finalItemData`
                         guard let finalIndexPath = initialItemData[i][j].moveIndex else {
                             initialItemData[i][j].event = .deleted
                             continue
@@ -510,6 +525,11 @@ public enum Diff {
                 return (initialItemData, finalItemData)
         }
 
+        /**
+         Marked by Xavier:
+         
+         Compare `initialSections` and `finalSections` and mark edit type of each section in `initialSectionData` and `finalSectionData`
+         */
         static func calculateSectionMovements(initialSections: [Section], finalSections: [Section]) throws
             -> (ContiguousArray<SectionAssociatedData>, ContiguousArray<SectionAssociatedData>) {
 
@@ -518,6 +538,12 @@ public enum Diff {
                 var initialSectionData = ContiguousArray<SectionAssociatedData>(repeating: SectionAssociatedData.initial, count: initialSections.count)
                 var finalSectionData = ContiguousArray<SectionAssociatedData>(repeating: SectionAssociatedData.initial, count: finalSections.count)
 
+                /**
+                 Marked by Xavier:
+                 
+                 Traverse finalSections and assign new index to corresponding `moveIndex` in `finalSectionData`
+                 and `initialSectionIndex` if `initialSectionIndexes[section.identity]` exists.
+                 */
                 for (i, section) in finalSections.enumerated() {
                     finalSectionData[i].itemCount = finalSections[i].items.count
                     guard let initialSectionIndex = initialSectionIndexes[section.identity] else {
@@ -549,6 +575,7 @@ public enum Diff {
                 // moved sections
 
                 var untouchedOldIndex: Int? = 0
+                // Marked by Xavier: get next untouched old index from `initialSectionData`
                 let findNextUntouchedOldIndex = { (initialSearchIndex: Int?) -> Int? in
                     guard var i = initialSearchIndex else {
                         return nil
@@ -569,6 +596,11 @@ public enum Diff {
                 // this should fix all sections and move them into correct places
                 // 2nd stage
                 for i in 0 ..< finalSections.count {
+                    /**
+                     Marked by Xavier:
+                     Now in `initialSectionData` the edit type of non `.untouched` section is `.deleted`, so the
+                     reason of using `findNextUntouchedOldIndex(initialSearchIndex:)` is to skip deleted sections.
+                    */
                     untouchedOldIndex = findNextUntouchedOldIndex(untouchedOldIndex)
 
                     // oh, it did exist
@@ -594,9 +626,17 @@ public enum Diff {
         mutating func generateDeleteSectionsDeletedItemsAndUpdatedItems() throws -> [Changeset<Section>] {
             var deletedSections = [Int]()
 
+            // the corresponding section is not deleted
+            // but the item correspond to the item path is deleted.
             var deletedItems = [ItemPath]()
+            // event of members in `updatedItems` is `.moved` or `.movedAutomatically`
+            // identity for each member is same in `initialItemData` and `finalItemData`
+            // but a portion of property is updated
             var updatedItems = [ItemPath]()
 
+            // `afterDeleteState` is an array of Section
+            // `safeOriginal` is original section in `initialSections`
+            // `afterDeleteItems` are items that were not deleted from `finalItemData`, properties of those items may be updated.
             var afterDeleteState = [Section]()
 
             // mark deleted items {
@@ -612,6 +652,7 @@ public enum Diff {
                     continue
                 }
 
+                // event of section is not `.deleted`
                 var afterDeleteItems: [Section.Item] = []
                 for j in 0 ..< initialItems.count {
                     let event = initialItemData[i][j].event
@@ -621,6 +662,8 @@ public enum Diff {
                     case .moved, .movedAutomatically:
                         let finalItemIndex = try initialItemData[i][j].moveIndex.unwrap()
                         let finalItem = finalItemCache[finalItemIndex.sectionIndex][finalItemIndex.itemIndex]
+                        // Items that event is `.move` or `.movedAutomatically` are detected by identity of the item,
+                        // but it not detects changes on other properties. That's why `updateItems` is in here.
                         if finalItem != initialSections[i].items[j] {
                             updatedItems.append(ItemPath(sectionIndex: i, itemIndex: j))
                         }

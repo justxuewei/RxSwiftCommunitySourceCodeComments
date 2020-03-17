@@ -9,7 +9,6 @@
 import Foundation
 
 public struct SectionModel<Section, ItemType> {
-    // Xavier Marks: Section is a type conforming to SectionModelType
     public var model: Section
     public var items: [Item]
 

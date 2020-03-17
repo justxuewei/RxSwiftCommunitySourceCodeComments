@@ -75,6 +75,7 @@ open class RxTableViewSectionedAnimatedDataSource<Section: AnimatableSectionMode
 
     var dataSet = false
 
+    // in RxTableViewDataSource protocol
     open func tableView(_ tableView: UITableView, observedEvent: Event<Element>) {
         Binder(self) { dataSource, newSections in
             #if DEBUG
