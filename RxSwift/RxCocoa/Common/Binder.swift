@@ -32,7 +32,7 @@ public struct Binder<Value>: ObserverType {
 
         // Marked by Xavier:
         //
-        // The key point of initialization of Binder is `self._binding` assignment with binding closure
+        // The key point of initialization of Binder is `self._binding` assigns with binding closure
         self._binding = { event in
             switch event {
             case .next(let element):

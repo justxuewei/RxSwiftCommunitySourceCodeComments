@@ -29,6 +29,9 @@ Time and space complexity of insertion and deletion is O(n).
 
 It is suitable for storing small number of elements.
 */
+
+// Bag is a container to save type `T` in three levels.
+// First level is _value0, second is ContiguousArray, and third is a dictionary if count of members is too big.
 struct Bag<T> : CustomDebugStringConvertible {
     /// Type of identifier for inserted elements.
     typealias KeyType = BagKey

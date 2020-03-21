@@ -9,7 +9,9 @@
 
 // MARK: forEach
 
+// @inline is an annotation for speeding up compilation
 @inline(__always)
+// This function is to forward event passed from parameters to every members in Bag.
 func dispatch<Element>(_ bag: Bag<(Event<Element>) -> Void>, _ event: Event<Element>) {
     bag._value0?(event)
 

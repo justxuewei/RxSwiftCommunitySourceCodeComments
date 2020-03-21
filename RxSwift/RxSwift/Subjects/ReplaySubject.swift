@@ -204,6 +204,14 @@ private class ReplayBufferBase<Element>
     }
 }
 
+/**
+ Marked by Xavier:
+ 
+ Buffer of `ReplayOne` is a property named `_value`.
+ According to `ReplayBufferBase`, `addValueToBuffer(_:)` is called when a new event comes in.
+ Then `addValueToBuffer(_:)` will save the event to `_value` to re-emit the data from buffer if a new observer subscribes this subject.
+ And `replayBuffer(_:)` is the key point of how `ReplyOne` replays buffer.
+ */
 private final class ReplayOne<Element> : ReplayBufferBase<Element> {
     private var _value: Element?
     
